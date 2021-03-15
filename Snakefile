@@ -20,7 +20,7 @@ pepfile: 'data/config.yaml'
 all_samples = pep.sample_table['sample_name']
 
 #containers
-bbduk_container = 'shub://TomHarrop/seq-utils:bbmap_38.76'
+bbduk_container = 'shub://TomHarrop/singularity-containers:bbmap_38.00'
 salmon_container = 'docker://combinelab/salmon:latest'
 bioconductor_container = 'shub://TomHarrop/r-containers:bioconductor_3.11'
 
@@ -36,7 +36,6 @@ rule target:
         #'output/deseq2/asw_dual/unann/nr_blastx.outfmt3',
         'output/deseq2/asw_dual/asw_dual_dds.rds',
         'output/deseq2/mh_dual/mh_dual_dds.rds',
-        'output/deseq2/asw/asw_dds.rds',
         expand('output/joined/{sample}_r1.fq.gz', sample=all_samples)
 
 #####################
@@ -176,19 +175,6 @@ rule asw_mh_concat_salmon_index:
 ##############################
 ## map to asw transcriptome ##
 ##############################
-
-rule asw_dds:
-    input:
-        asw_gene_trans_map = 'data/asw-transcriptome/output/trinity/Trinity.fasta.gene_trans_map',
-        quant_files = expand('output/asw_salmon/{sample}_quant/quant.sf', sample=all_samples)
-    output:
-        asw_dds = 'output/deseq2/asw/asw_dds.rds'
-    singularity:
-        bioconductor_container
-    log:
-        'output/logs/asw_dds.log'
-    script:
-        'src/asw/make_asw_dds.R'
 
 rule asw_salmon_quant:
     input:

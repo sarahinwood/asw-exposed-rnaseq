@@ -21,3 +21,6 @@ ordered_sig_res_group_table <- subset(ordered_res_group_table, padj < 0.05)
 sig_annots <- merge(ordered_sig_res_group_table, trinotate, by.x="rn", by.y="#gene_id", all.x=TRUE)
 fwrite(sig_annots, "output/deseq2/asw/pc1/sig_annots.csv")
 saveRDS(asw_dds_pc1, "output/deseq2/asw/pc1/asw_dds_pc1.rds")
+
+plotCounts(asw_dds_pc1, "TRINITY_DN14750_c0_g1", intgroup = c("pc1"))
+
