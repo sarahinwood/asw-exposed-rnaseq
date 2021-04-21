@@ -3,6 +3,8 @@ library(fgsea)
 library(ggplot2)
 library(viridis)
 library(stringr)
+library(gridExtra)
+library(cowplot)
 
 set.seed(10)
 
@@ -46,21 +48,73 @@ annot_sig_fgsea <- merge(sig_fgsea_res, go_annot_table, by.x="pathway", by.y="pa
 annot_sig_fgsea$leadingEdge_size <- str_count(annot_sig_fgsea$leadingEdge, "TRINITY_DN")
 fwrite(annot_sig_fgsea, "output/deseq2/asw/exposed/sig_GO_enrichment.csv")
 
+annot_sig_fgsea <- fread("output/deseq2/asw/exposed/sig_GO_enrichment.csv")
+
+#####################
+## all in one plot ##
+#####################
+
+###swap _ for space in pathway kind
+annot_sig_fgsea$pathway_kind <- gsub("_", " ", annot_sig_fgsea$pathway_kind)
+##reorder - sorts by pathway_kind reverse alphabetically but can't figure out how to do any better
+annot_sig_fgsea$pathway_name <- factor(annot_sig_fgsea$pathway_name, levels=annot_sig_fgsea$pathway_name[order(annot_sig_fgsea$pathway_kind, annot_sig_fgsea$NES)])
+##plot
+ggplot(annot_sig_fgsea, aes(pathway_name, NES)) +
+  geom_segment(aes(y=0, yend=annot_sig_fgsea$NES, x=pathway_name, xend=pathway_name), alpha=0.4)+
+  geom_point(aes(colour=pathway_kind, size=leadingEdge_size)) + 
+  labs(x="Gene ontology terms", y="FGSEA normalized enrichment score",
+       colour="GO domain", size="Leading\nedge size") +
+  ylab("FGSEA normalized enrichment score")+
+  coord_flip() +
+  scale_colour_viridis(discrete=TRUE)+
+  theme_bw()
+
+####################
+## separate plots ##
+####################
 
 ##split into 3 tables --> biological process, cellular component and molecular function
 bp_res <- annot_sig_fgsea[annot_sig_fgsea$pathway_kind=="biological_process"]
 cc_res <- annot_sig_fgsea[annot_sig_fgsea$pathway_kind=="cellular_component"]
 mf_res <- annot_sig_fgsea[annot_sig_fgsea$pathway_kind=="molecular_function"]
 
-##lollipop plot
-ggplot(bp_res, aes(reorder(pathway_name, NES), NES)) +
+##lollipop plot - bp
+bp <- ggplot(bp_res, aes(reorder(pathway_name, NES), NES)) +
   geom_segment(aes(y=0, yend=bp_res$NES, x=pathway_name, xend=pathway_name), alpha=0.4)+
   geom_point(aes(colour=padj, size=leadingEdge_size)) + 
-  labs(x="Biological Process GO Pathway", y="FGSEA Normalized Enrichment Score",
+  labs(x="Biological Pathway GO Terms", y="FGSEA Normalized Enrichment Score",
        colour="Adjusted\nP-Value", size="Leading\nEdge Size") + 
+  ylim(-1.8, 1.8)+
+  ylab("")+
   coord_flip() +
   scale_colour_viridis()+
   theme_bw()
+
+##lollipop plot - cc
+cc <- ggplot(cc_res, aes(reorder(pathway_name, NES), NES)) +
+  geom_segment(aes(y=0, yend=cc_res$NES, x=pathway_name, xend=pathway_name), alpha=0.4)+
+  geom_point(aes(colour=padj, size=leadingEdge_size)) + 
+  labs(x="Cellular Component GO Terms", y="FGSEA Normalized Enrichment Score",
+       colour="Adjusted\nP-Value", size="Leading\nEdge Size") + 
+  ylim(-1.8, 1.8)+
+  coord_flip() +
+  scale_colour_viridis()+
+  theme_bw()
+
+##lollipop plot - mf
+mf <- ggplot(mf_res, aes(reorder(pathway_name, NES), NES)) +
+  geom_segment(aes(y=0, yend=mf_res$NES, x=pathway_name, xend=pathway_name), alpha=0.4)+
+  geom_point(aes(colour=padj, size=leadingEdge_size)) + 
+  labs(x="Molecular Function GO Terms", y="FGSEA Normalized Enrichment Score",
+       colour="Adjusted\nP-Value", size="Leading\nEdge Size") + 
+  ylim(-1.8, 1.8)+
+  ylab("")+
+  coord_flip() +
+  scale_colour_viridis()+
+  theme_bw()
+
+all_plots <- align_plots(bp, mf, cc, align = "hv")
+grid.arrange(all_plots[[1]], all_plots[[2]], all_plots[[3]])
 
 ##plot single gene enrichment
 plotEnrichment(pathways[["GO:"]], ranks) + labs(title="")

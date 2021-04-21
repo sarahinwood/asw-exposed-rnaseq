@@ -33,7 +33,8 @@ rule target:
         expand('output/asw_salmon/{sample}_quant/quant.sf', sample=all_samples),
         expand('output/asw_mh_concat_salmon/{sample}_quant/quant.sf', sample=all_samples),
         'output/fastqc',
-        #'output/deseq2/asw_dual/unann/nr_blastx.outfmt3',
+        'output/deseq2/asw/unann_degs/nr_blastx.outfmt3',
+        'output/deseq2/asw/asw_dds.rds',
         'output/deseq2/asw_dual/asw_dual_dds.rds',
         'output/deseq2/mh_dual/mh_dual_dds.rds',
         expand('output/joined/{sample}_r1.fq.gz', sample=all_samples)
@@ -44,9 +45,9 @@ rule target:
 
 rule unann_degs_blastx:
     input:
-        unann_deg_transcripts = 'output/deseq2/asw_dual/unann/unann_deg_transcripts.fasta'
+        unann_deg_transcripts = 'output/deseq2/asw/unann_degs/unann_deg_transcripts.fasta'
     output:
-        blastx_res = 'output/deseq2/asw_dual/unann/nr_blastx.outfmt3'
+        blastx_res = 'output/deseq2/asw/unann_degs/nr_blastx.outfmt6'
     params:
         blast_db = 'bin/blastdb/nr/nr'
     threads:
@@ -64,36 +65,22 @@ rule unann_degs_blastx:
 
 rule filter_unann_deg_transcripts:
     input:
-        dual_transcriptome = 'data/asw_mh_transcriptome/asw_mh_isoforms_by_length.fasta',
-        transcript_hit_ids = 'output/deseq2/asw_dual/unann/unann_degs_list.txt'
+        asw_transcriptome = 'data/asw-transcriptome/output/trinity_filtered_isoforms/isoforms_by_length.fasta',
+        transcript_hit_ids = 'output/deseq2/asw/unann_degs/unann_deg_list.txt'
     output:
-        unann_deg_transcripts = 'output/deseq2/asw_dual/unann/unann_deg_transcripts.fasta'
+        unann_deg_transcripts = 'output/deseq2/asw/unann_degs/unann_deg_transcripts.fasta'
     singularity:
         bbduk_container
     log:
         'output/logs/filter_unann_deg_transcripts.log'
     shell:
         'filterbyname.sh '
-        'in={input.dual_transcriptome} '
+        'in={input.asw_transcriptome} '
         'include=t '
         'names={input.transcript_hit_ids} '
         'substring=name '
         'out={output.unann_deg_transcripts} '
         '&> {log}'
-
-rule ID_unann_DEGs_dual:
-    input:
-        asw_dds = 'output/deseq2/asw_dual/asw_dual_dds.rds',
-        loc_ex_int_degs = 'output/deseq2/asw_dual/location_exposure_int/sig_w_annots.csv',
-        loc_degs = 'output/deseq2/asw_dual/location_pairwise/sig_w_annots.csv'
-    output:
-        unann_degs_list = 'output/deseq2/asw_dual/unann/unann_degs_list.txt'
-    singularity:
-        bioconductor_container
-    log:
-        'output/logs/ID_unann_DEGs_dual.log'
-    script:
-        'src/dual_species/asw/filter_unann_degs.R'
 
 ########################################
 ## map to asw-mh concat transcriptome ##
@@ -175,6 +162,19 @@ rule asw_mh_concat_salmon_index:
 ##############################
 ## map to asw transcriptome ##
 ##############################
+
+rule asw_dds:
+    input:
+        asw_gene_trans_map = 'data/asw-transcriptome/output/trinity/Trinity.fasta.gene_trans_map',
+        quant_files = expand('output/asw_salmon/{sample}_quant/quant.sf', sample=all_samples)
+    output:
+        asw_dds = 'output/deseq2/asw/asw_dds.rds'
+    singularity:
+        bioconductor_container
+    log:
+        'output/logs/asw_dds.log'
+    script:
+        'src/asw/make_asw_dds.R'
 
 rule asw_salmon_quant:
     input:
