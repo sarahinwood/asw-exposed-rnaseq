@@ -33,7 +33,7 @@ rule target:
         expand('output/asw_salmon/{sample}_quant/quant.sf', sample=all_samples),
         expand('output/asw_mh_concat_salmon/{sample}_quant/quant.sf', sample=all_samples),
         'output/fastqc',
-        'output/deseq2/asw/unann_degs/nr_blastx.outfmt3',
+        'output/deseq2/asw/unann_degs/interaction_nr_blastx.outfmt6',
         'output/deseq2/asw/asw_dds.rds',
         'output/deseq2/asw_dual/asw_dual_dds.rds',
         'output/deseq2/mh_dual/mh_dual_dds.rds',
@@ -45,9 +45,9 @@ rule target:
 
 rule unann_degs_blastx:
     input:
-        unann_deg_transcripts = 'output/deseq2/asw/unann_degs/unann_deg_transcripts.fasta'
+        unann_deg_transcripts = 'output/deseq2/asw/unann_degs/interaction_unann_deg_transcripts.fasta'
     output:
-        blastx_res = 'output/deseq2/asw/unann_degs/nr_blastx.outfmt6'
+        blastx_res = 'output/deseq2/asw/unann_degs/interaction_nr_blastx.outfmt6'
     params:
         blast_db = 'bin/blastdb/nr/nr'
     threads:
@@ -66,9 +66,9 @@ rule unann_degs_blastx:
 rule filter_unann_deg_transcripts:
     input:
         asw_transcriptome = 'data/asw-transcriptome/output/trinity_filtered_isoforms/isoforms_by_length.fasta',
-        transcript_hit_ids = 'output/deseq2/asw/unann_degs/unann_deg_list.txt'
+        transcript_hit_ids = 'output/deseq2/asw/unann_degs/interaction_unann_deg_list.txt'
     output:
-        unann_deg_transcripts = 'output/deseq2/asw/unann_degs/unann_deg_transcripts.fasta'
+        unann_deg_transcripts = 'output/deseq2/asw/unann_degs/interaction_unann_deg_transcripts.fasta'
     singularity:
         bbduk_container
     log:

@@ -35,7 +35,7 @@ saveRDS(asw_dds_exposed, "output/deseq2/asw/exposed/asw_dds_exposed.rds")
 
 plotCounts(asw_dds_exposed, "TRINITY_DN16993_c0_g1", intgroup="treatment")
 
-EnhancedVolcano(ordered_res_group_table, x="log2FoldChange", y="padj", lab="", title="", subtitle="", pointSize = 1.5, pCutoff = 0.05, colAlpha=0.2, col=c("#FDE725FF", "#21908CFF", "grey20", "#440154FF"))
+EnhancedVolcano(ordered_res_group_table, x="log2FoldChange", y="padj", lab="", title="", subtitle="", pointSize = 3, pCutoff = 0.05, colAlpha=0.5, col=c("#FDE725FF", "#21908CFF", "grey20", "#440154FF"))
 
 ##blast results
 unann_blast <- fread("output/deseq2/asw/unann_degs/blastx_unann_res.csv")

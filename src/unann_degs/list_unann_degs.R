@@ -1,7 +1,7 @@
 library(data.table)
 library(dplyr)
 
-interaction_degs <- fread("output/deseq2/asw/location_exposure_pc1_int/pc1_sig_w_annots.csv", na.strings="")
+interaction_degs <- fread("output/deseq2/asw/location_exposure_pc1_int/sig_w_annots.csv", na.strings="")
 setnames(interaction_degs, old=c("#gene_id"), new=c("rn"))
 location_degs <- fread("output/deseq2/asw/location/sig_w_annots.csv", na.strings="")
 exposed_degs <- fread("output/deseq2/asw/exposed/sig_annots.csv", na.strings="")
