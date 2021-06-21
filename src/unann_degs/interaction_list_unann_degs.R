@@ -12,9 +12,13 @@ all_degs <- full_join(all_degs, location_nc)
 all_degs <- full_join(all_degs, location_exposure)
 all_degs <- full_join(all_degs, interaction)
 all_degs <- all_degs[,c(1,8,9,13)]
+
 ##blank cells with no blastx are not all set to NA
 ##none of the genes without BlastX have BlastP either
 unann_degs <- subset(all_degs, is.na(all_degs$sprot_Top_BLASTX_hit))
-list_unann_degs <- list(unique(unann_degs$rn))
+##add TRINITY_DN514_c0_g1 - gets plant cell wall annot
+DN514 <- subset(all_degs, all_degs$rn=="TRINITY_DN514_c0_g1")
+all_unann_degs <- full_join(unann_degs, DN514)
+list_unann_degs <- list(unique(all_unann_degs$rn))
 fwrite(list_unann_degs, "output/deseq2/asw/unann_degs/interaction_unann_deg_list.txt")
 

@@ -56,7 +56,7 @@ annot_sig_fgsea <- fread("output/deseq2/asw/pc1/plot_sig_GO_enrichment.csv")
 ###swap _ for space in pathway kind
 annot_sig_fgsea$pathway_kind <- gsub("_", " ", annot_sig_fgsea$pathway_kind)
 ##reorder - sorts by pathway_kind reverse alphabetically but can't figure out how to do any better
-annot_sig_fgsea$pathway_name <- factor(annot_sig_fgsea$pathway_name, levels=annot_sig_fgsea$pathway_name[order(annot_sig_fgsea$pathway_kind, annot_sig_fgsea$NES)])
+annot_sig_fgsea$pathway_name <- factor(annot_sig_fgsea$pathway_name, levels=annot_sig_fgsea$pathway_name[order(annot_sig_fgsea$pathway_kind, annot_sig_fgsea$NES, decreasing=TRUE)])
 ##plot
 ggplot(annot_sig_fgsea, aes(pathway_name, NES)) +
   geom_segment(aes(y=0, yend=annot_sig_fgsea$NES, x=pathway_name, xend=pathway_name), alpha=0.4)+

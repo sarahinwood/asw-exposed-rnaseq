@@ -1,4 +1,3 @@
-
 #!/usr/bin/env Rscript
 
 log <- file(snakemake@log[[1]],
@@ -9,9 +8,9 @@ sink(log,
      append = TRUE,
      type = "output")
 
-library("tximport")
-library("data.table")
-library("DESeq2")
+library(tximport)
+library(data.table)
+library(DESeq2)
 
 asw_gene_trans_map <- snakemake@input[['asw_gene_trans_map']]
 
@@ -34,6 +33,7 @@ dds <- DESeqDataSetFromTximport(txi, colData = sample_data[colnames(txi$counts)]
 ##save dds object
 asw_dds <- snakemake@output[['asw_dds']]
 saveRDS(dds, asw_dds)
+saveRDS(dds, 'output/deseq2/asw/asw_dds.R')
 
 # log
 sessionInfo()

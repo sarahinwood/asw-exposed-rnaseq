@@ -3,7 +3,7 @@ library(VennDiagram)
 
 ##DEG lists
 location_int <- fread("output/deseq2/asw/interaction/location_nc/sig_w_annots.csv")
-location_old <- fread("output/deseq2/asw/location/sig_w_annots.csv")
+location_old <- fread("output/deseq2/asw/old_analyses/location/sig_w_annots.csv")
 
 ##venn diagram
 vd1 <- venn.diagram(x = list("location_int"=location_int$rn, "location_old"=location_old$rn), filename=NULL, alpha=0.7, cex = 1, cat.cex=1, lwd=1.5)
@@ -14,6 +14,10 @@ grid.draw(vd1)
 overlapped <- intersect(location_int$rn, location_old$rn)
 interaction_sp <- setdiff(location_int$rn, location_old$rn)
 old_sp <- setdiff(location_old$rn, location_int$rn)
+
+int_sp <- subset(location_int, rn %in% interaction_sp)
+
+old_loc_sp <- subset(location_old, rn %in% old_sp)
 
 ###############################
 ## plot multiple gene counts ##

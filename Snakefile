@@ -49,7 +49,7 @@ rule unann_degs_blastx:
     output:
         blastx_res = 'output/deseq2/asw/unann_degs/interaction_nr_blastx.outfmt6'
     params:
-        blast_db = 'bin/blastdb/nr/nr'
+        blast_db = 'bin/blast_db/nr/nr'
     threads:
         50
     log:
@@ -174,7 +174,7 @@ rule asw_dds:
     log:
         'output/logs/asw_dds.log'
     script:
-        'src/asw/make_asw_dds.R'
+        'src/make_asw_dds.R'
 
 rule asw_salmon_quant:
     input:
