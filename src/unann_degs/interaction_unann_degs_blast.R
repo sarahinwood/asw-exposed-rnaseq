@@ -8,6 +8,7 @@ fil_blast <- data.table(dplyr::filter(unann_degs_blast, !grepl('uncharacterized'
 fil_blast <- data.table(dplyr::filter(fil_blast, !grepl('hypothetical', annotation, ignore.case=TRUE)))
 fil_blast <- data.table(dplyr::filter(fil_blast, !grepl('unnamed', annotation, ignore.case=TRUE)))
 fil_blast <- data.table(dplyr::filter(fil_blast, !grepl('GSCOCG000', annotation, ignore.case=TRUE)))
+fil_blast <- data.table(dplyr::filter(fil_blast, !grepl('WS0399_0', annotation, ignore.case=TRUE)))
 
 setorder(fil_blast, transcript_id, evalue, -bit_score)
 blast_res <- fil_blast[,.SD[which.min(evalue)], by=transcript_id]
