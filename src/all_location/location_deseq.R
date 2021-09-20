@@ -81,6 +81,14 @@ ggplot(plotting_counts) +
   theme(axis.text.x = element_blank()) +
   facet_wrap(~rn, scales="free")
 
+##low counts transcript lengths
+transcript_info <- fread("data/asw-transcriptome/output/trinity_abundance/RSEM.isoforms.results")
+transcript_length <- transcript_info[,c(1,3,4)]
+sig_length <- merge(sig_annots, transcript_length, by="transcript_id", all.x=TRUE)
+lowcount <- subset(sig_length, baseMean<1)
+mean(lowcount$length)
 
+highcount<- subset(sig_length, baseMean>=5)
+mean(highcount$length)
+sum(!(highcount$prot_id==""))
 
-                    

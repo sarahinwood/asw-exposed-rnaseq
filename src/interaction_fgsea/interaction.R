@@ -44,12 +44,12 @@ sig_fgsea_res <- subset(sorted_fgsea_res, padj < 0.05)
 annot_sig_fgsea <- merge(sig_fgsea_res, go_annot_table, by.x="pathway", by.y="pathway", all.x=TRUE)
 ##need number of genes in leading edge for lollipop plot
 annot_sig_fgsea$leadingEdge_size <- str_count(annot_sig_fgsea$leadingEdge, "TRINITY_DN")
-fwrite(annot_sig_fgsea, "output/deseq2/asw/interaction/interaction/sig_GO_enrichment.csv")
+fwrite(annot_sig_fgsea, "output/deseq2/asw/interaction/interaction/fgsea/sig_GO_enrichment.csv")
 
 #####################
 ## all in one plot ##
 #####################
-annot_sig_fgsea <- fread("output/deseq2/asw/interaction/interaction/sig_GO_enrichment_plot.csv")
+annot_sig_fgsea <- fread("output/deseq2/asw/interaction/interaction/fgsea/sig_GO_enrichment_plot.csv")
 ###swap _ for space in pathway kind
 annot_sig_fgsea$pathway_kind <- gsub("_", " ", annot_sig_fgsea$pathway_kind)
 ##reorder - sorts by pathway_kind reverse alphabetically but can't figure out how to do any better
@@ -65,63 +65,35 @@ ggplot(annot_sig_fgsea, aes(pathway_name, NES)) +
   scale_colour_viridis(discrete=TRUE)+
   theme_bw()
 
-####################
-## separate plots ##
-####################
-library(gridExtra)
-library(cowplot)
-
-##split into 3 tables --> biological process, cellular component and molecular function
-bp_res <- annot_sig_fgsea[annot_sig_fgsea$pathway_kind=="biological_process"]
-cc_res <- annot_sig_fgsea[annot_sig_fgsea$pathway_kind=="cellular_component"]
-mf_res <- annot_sig_fgsea[annot_sig_fgsea$pathway_kind=="molecular_function"]
-
-##lollipop plot - bp
-bp <- ggplot(bp_res, aes(reorder(pathway_name, NES), NES)) +
-  geom_segment(aes(y=0, yend=bp_res$NES, x=pathway_name, xend=pathway_name), alpha=0.4)+
-  geom_point(aes(colour=padj, size=leadingEdge_size)) + 
-  labs(x="Biological Pathway GO Terms", y="FGSEA Normalized Enrichment Score",
-       colour="Adjusted\nP-Value", size="Leading\nEdge Size") + 
-  ylim(-1.8, 1.8)+
-  ylab("")+
-  coord_flip() +
-  scale_colour_viridis()+
-  theme_bw()
-
-##lollipop plot - cc
-cc <- ggplot(cc_res, aes(reorder(pathway_name, NES), NES)) +
-  geom_segment(aes(y=0, yend=cc_res$NES, x=pathway_name, xend=pathway_name), alpha=0.4)+
-  geom_point(aes(colour=padj, size=leadingEdge_size)) + 
-  labs(x="Cellular Component GO Terms", y="FGSEA Normalized Enrichment Score",
-       colour="Adjusted\nP-Value", size="Leading\nEdge Size") + 
-  ylim(-1.8, 1.8)+
-  coord_flip() +
-  scale_colour_viridis()+
-  theme_bw()
-
-##lollipop plot - mf
-mf <- ggplot(mf_res, aes(reorder(pathway_name, NES), NES)) +
-  geom_segment(aes(y=0, yend=mf_res$NES, x=pathway_name, xend=pathway_name), alpha=0.4)+
-  geom_point(aes(colour=padj, size=leadingEdge_size)) + 
-  labs(x="Molecular Function GO Terms", y="FGSEA Normalized Enrichment Score",
-       colour="Adjusted\nP-Value", size="Leading\nEdge Size") + 
-  ylim(-1.8, 1.8)+
-  ylab("")+
-  coord_flip() +
-  scale_colour_viridis()+
-  theme_bw()
-
-all_plots <- align_plots(bp, mf, cc, align = "hv")
-grid.arrange(all_plots[[1]], all_plots[[2]], all_plots[[3]])
-
-##plot single gene enrichment
-plotEnrichment(pathways[["GO:"]], ranks) + labs(title="")
-
 ##table plot
 bp_up <- bp_res[ES > 0][head(order(pval)), pathway]
 bp_down <- bp_res[ES < 0][head(order(pval)), pathway]
 bp_pathways <- c(bp_up, rev(bp_down))
 plotGseaTable(pathways[bp_pathways], ranks, fgsea_res, gseaParam=0.5)
 
+####find CORE members that contribute to ES score
+proteolysis_res <- annot_sig_fgsea[annot_sig_fgsea$pathway == "GO:0006508",]
+proteolysis_res_leading_edge <- data.frame(proteolysis_res$leadingEdge)
+setnames(proteolysis_res_leading_edge, old=c("c..TRINITY_DN43520_c0_g1....TRINITY_DN71936_c0_g1....TRINITY_DN46398_c0_g1..."), new=c("gene_id"))
+proteolysis_leading_annots <- merge(proteolysis_res_leading_edge, trinotate_report, by.x="gene_id", by.y="#gene_id")
+fwrite(proteolysis_leading_annots, "output/deseq2/asw/interaction/interaction/fgsea/proteolysis_leading_edge_annots.csv")
+##plot enrichment of GO term
+plotEnrichment(pathways[["GO:0006508"]], ranks) + labs(title="Proteolysis")
+
+nab_res <- annot_sig_fgsea[annot_sig_fgsea$pathway == "GO:0003676",]
+nab_res_leading_edge <- data.frame(nab_res$leadingEdge)
+setnames(nab_res_leading_edge, old=c("c..TRINITY_DN20461_c1_g2....TRINITY_DN76376_c0_g1....TRINITY_DN68250_c0_g1..."), new=c("gene_id"))
+nab_leading_annots <- merge(nab_res_leading_edge, trinotate_report, by.x="gene_id", by.y="#gene_id")
+fwrite(nab_leading_annots, "output/deseq2/asw/interaction/interaction/fgsea/nab_leading_edge_annots.csv")
+##plot enrichment of GO term
+plotEnrichment(pathways[["GO:0003676"]], ranks) + labs(title="nucleic acid binding")
+
+memb_res <- annot_sig_fgsea[annot_sig_fgsea$pathway == "GO:0016021",]
+memb_res_leading_edge <- data.frame(memb_res$leadingEdge)
+setnames(memb_res_leading_edge, old=c("c..TRINITY_DN21376_c1_g1....TRINITY_DN2656_c0_g1....TRINITY_DN15880_c0_g1..."), new=c("gene_id"))
+memb_leading_annots <- merge(memb_res_leading_edge, trinotate_report, by.x="gene_id", by.y="#gene_id")
+fwrite(memb_leading_annots, "output/deseq2/asw/interaction/interaction/fgsea/membrane_leading_edge_annots.csv")
+##plot enrichment of GO term
+plotEnrichment(pathways[["GO:0016021"]], ranks) + labs(title="integral component of membrane")
 
 
