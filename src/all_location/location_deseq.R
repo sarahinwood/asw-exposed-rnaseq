@@ -3,8 +3,8 @@ library(DESeq2)
 library(EnhancedVolcano)
 library(ggplot2)
 library(viridis)
-library(dplyr)
-library(tidyr)
+library(tidyverse)
+library(pheatmap)
 
 ############
 ## set up ##
@@ -92,3 +92,28 @@ highcount<- subset(sig_length, baseMean>=5)
 mean(highcount$length)
 sum(!(highcount$prot_id==""))
 
+#############
+## heatmap ##
+#############
+
+asw_dds_location <- readRDS("output/deseq2/asw/all_location/asw_dds_location.rds")
+degs <- fread("output/deseq2/asw/all_location/sig_w_annots.csv")
+
+##vst transform
+vst <- varianceStabilizingTransformation(asw_dds_location, blind=TRUE)
+vst_assay_dt <- data.table(assay(vst), keep.rownames=TRUE)
+##subset for DEGs
+vst_degs <- subset(vst_assay_dt, rn %in% degs$rn)
+##turn first row back to row name
+vst_degs_plot <- vst_degs %>% remove_rownames %>% column_to_rownames(var="rn")
+
+##get location label info
+sample_to_label <- data.table(data.frame(colData(asw_dds_location)[,c("Weevil_Location", "sample_name")]))
+sample_to_label <- sample_to_label %>% remove_rownames %>% column_to_rownames(var="sample_name")
+
+location_colours <- list(Weevil_Location = c(Invermay="#3B0F70FF", Ruakura="#B63679FF"))
+##plot
+##not clustered by sample
+pheatmap(vst_degs_plot, cluster_rows=TRUE, cluster_cols=FALSE, show_rownames=FALSE,
+         annotation_col=sample_to_label, annotation_colors=location_colours, annotation_names_col=FALSE,
+         show_colnames = FALSE, border_color=NA, color=viridis(50))

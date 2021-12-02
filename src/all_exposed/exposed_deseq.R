@@ -2,6 +2,9 @@ library(data.table)
 library(tidyr)
 library(DESeq2)
 library(EnhancedVolcano)
+library(viridis)
+library(tidyverse)
+library(pheatmap)
 
 ############
 ## set up ##
@@ -55,7 +58,7 @@ plotCounts(asw_dds_exposed, "TRINITY_DN60874_c0_g1", intgroup = c("treatment"))
 ##########
 ## plot ##
 ##########
-asw_dds_location <- readRDS("output/deseq2/asw/all_exposed/asw_dds_exposed.rds")
+asw_dds_exposed <- readRDS("output/deseq2/asw/all_exposed/asw_dds_exposed.rds")
 
 ##genes with some annotation
 blastx_trino_annots <- subset(all_annots, !is.na(all_annots$sprot_Top_BLASTX_hit))
@@ -64,7 +67,7 @@ degs_annots <- full_join(blastx_trino_annots, blast_nr_annots)
 id_annot <- degs_annots[,c(1,9)]
 
 ##get gene counts
-counts_table <- data.table(counts(asw_dds_location, normalized=TRUE), keep.rownames = TRUE)
+counts_table <- data.table(counts(asw_dds_exposed, normalized=TRUE), keep.rownames = TRUE)
 annot_counts <- filter(counts_table, rn %in% degs_annots$rn)
 ##melt for plotting
 plot_annots_counts <- annot_counts %>% gather(colnames(annot_counts)[2:25], key="sample_name", value="normalized_counts")
@@ -82,3 +85,31 @@ ggplot(plotting_counts) +
   theme_bw() +
   theme(axis.text.x = element_blank()) +
   facet_wrap(~plot_label, scales="free")
+
+#############
+## heatmap ##
+#############
+
+asw_dds_location <- readRDS("output/deseq2/asw/all_exposed/asw_dds_exposed.rds")
+degs <- fread("output/deseq2/asw/all_exposed/sig_w_annots.csv")
+
+##vst transform
+vst <- varianceStabilizingTransformation(asw_dds_location, blind=TRUE)
+vst_assay_dt <- data.table(assay(vst), keep.rownames=TRUE)
+##subset for DEGs
+vst_degs <- subset(vst_assay_dt, rn %in% degs$rn)
+##turn first row back to row name
+vst_degs <- vst_degs %>% remove_rownames %>% column_to_rownames(var="rn")
+vst_degs_plot <- vst_degs[,c(7:12, 19:24, 1:6, 13:18)]
+
+##get location label info
+sample_to_label <- data.table(data.frame(colData(asw_dds_location)[,c("Treatment", "sample_name")]))
+sample_to_label <- sample_to_label %>% remove_rownames %>% column_to_rownames(var="sample_name")
+
+location_colours <- list(Treatment = c(NC="#F1605DFF", Exposed="#FEAF77FF"))
+
+##plot
+##not clustered by sample
+pheatmap(vst_degs_plot, cluster_rows=TRUE, cluster_cols=FALSE, show_rownames=FALSE,
+         annotation_col=sample_to_label, annotation_colors=location_colours, annotation_names_col=FALSE,
+         show_colnames = FALSE, border_color=NA, color=viridis(50))

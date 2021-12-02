@@ -72,3 +72,29 @@ ggplot(plotting_counts) +
   facet_wrap(~plot_annot, scales="free", ncol=3)
 
 
+#############
+## heatmap ##
+#############
+
+asw_dds_int <- readRDS("output/deseq2/asw/interaction/dds_interaction.rds")
+degs <- fread("output/deseq2/asw/interaction/interaction/sig_w_annots.csv")
+
+##vst transform
+vst <- varianceStabilizingTransformation(asw_dds_int, blind=TRUE)
+vst_assay_dt <- data.table(assay(vst), keep.rownames=TRUE)
+##subset for DEGs
+vst_degs <- subset(vst_assay_dt, rn %in% degs$rn)
+##turn first row back to row name
+vst_degs <- vst_degs %>% remove_rownames %>% column_to_rownames(var="rn")
+vst_degs_plot <- vst_degs[,c(7:12, 1:6, 19:24, 13:18)]
+
+##get location label info
+sample_to_label <- data.table(data.frame(colData(asw_dds_int)[,c("Treatment", "Weevil_Location", "sample_name")]))
+sample_to_label <- sample_to_label %>% remove_rownames %>% column_to_rownames(var="sample_name")
+
+location_colours <- list(Weevil_Location = c(Invermay="#3B0F70FF", Ruakura="#B63679FF"), Treatment=c(Exposed="#FEAF77FF", NC="#F1605DFF"))
+##plot
+##not clustered by sample
+pheatmap(vst_degs_plot, cluster_rows=TRUE, cluster_cols=FALSE, show_rownames=FALSE,
+         annotation_col=sample_to_label, annotation_colors=location_colours, annotation_names_col=FALSE,
+         show_colnames = FALSE, border_color=NA, color=viridis(50))
